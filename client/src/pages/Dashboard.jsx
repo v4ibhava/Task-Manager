@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 function App() {
   const [title, setTitle] = useState("");
   const [tasks, setTasks] = useState([]);
+  const [search, setSearch] = useState("");
 
   const API = import.meta.env.VITE_API_URL + "/api/tasks";
 
@@ -14,16 +15,27 @@ function App() {
     setTasks(res.data);
   };
 
+  const filteredTasks = tasks.filter((task) =>
+    task.title.toLowerCase().includes(search.toLowerCase())
+  );
+
   const addTask = async () => {
     try {
       if (!title.trim()) return;
 
-      await axios.post(API, { title });
+      console.log("API URL:", API);
+      console.log("Sending title:", title);
+      
+      const res = await axios.post(API, { title });
+      console.log("Response:", res);
+      
       setTitle("");
       getTasks();
       toast.success("Task Added");
-    } catch {
-      toast.error("Failed to add task");
+    } catch (err) {
+      console.error("Error:", err);
+      console.error("Error response:", err.response);
+      toast.error(err.response?.data?.message || "Failed to add task");
     }
   };
 
@@ -60,6 +72,16 @@ function App() {
         <div className="bg-slate-800 shadow-2xl rounded-none w-full max-w-md p-8 border border-slate-700">
           <h1 className="text-3xl font-bold text-center mb-6 text-white">YOUR TASKS</h1>
 
+          <div className="flex gap-2 mb-4">
+            <input
+              type="text"
+              placeholder="Search tasks..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="border border-slate-600 w-full px-4 py-3 rounded-none outline-none bg-slate-700 text-white placeholder-slate-400 focus:border-cyan-500 transition-all"
+            />
+          </div>
+
           <div className="flex gap-2 mb-6">
             <input
               type="text"
@@ -78,7 +100,7 @@ function App() {
           </div>
 
           <div className="space-y-3">
-            {tasks.map((task) => (
+            {filteredTasks.map((task) => (
               <div
                 key={task._id}
                 className="flex justify-between items-center bg-slate-700 p-4 rounded-none border border-slate-600 hover:border-slate-500 transition-all"

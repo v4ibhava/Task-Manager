@@ -10,6 +10,7 @@ const app = express()
 // CORS configuration
 const allowedOrigins = [
   'https://task-manager-chi-mauve.vercel.app',
+  'https://task-manager-lilexcjfv-fantasize-projects.vercel.app',
   'http://localhost:5173',
   'http://localhost:3000'
 ];
