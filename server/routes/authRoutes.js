@@ -33,40 +33,45 @@ router.post("/register", async (req, res) => {
 
 // Login
 router.post("/login", async (req, res) => {
-  const { login, password } = req.body;
+  try {
+    const { login, password } = req.body;
 
-  const user = await User.findOne({
-    $or: [{ email: login }, { username: login }],
-  });
-
-  if (!user) {
-    return res.status(400).json({
-      message: "User not found",
+    const user = await User.findOne({
+      $or: [{ email: login }, { username: login }],
     });
-  }
 
-  const match = await bcrypt.compare(
-    password,
-    user.password
-  );
+    if (!user) {
+      return res.status(400).json({
+        message: "User not found",
+      });
+    }
 
-  if (!match) {
-    return res.status(400).json({
-      message: "Wrong password",
+    const match = await bcrypt.compare(
+      password,
+      user.password
+    );
+
+    if (!match) {
+      return res.status(400).json({
+        message: "Wrong password",
+      });
+    }
+
+    const token = jwt.sign(
+      { id: user._id },
+      "secretkey",
+      { expiresIn: "7d" }
+    );
+
+    res.json({
+      token,
+      username: user.username,
+      email: user.email,
     });
+  } catch (error) {
+    console.log("Login error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
-
-  const token = jwt.sign(
-    { id: user._id },
-    "secretkey",
-    { expiresIn: "7d" }
-  );
-
-  res.json({
-    token,
-    username: user.username,
-    email: user.email,
-  });
 });
 
 module.exports = router;
