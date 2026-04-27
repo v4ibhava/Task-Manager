@@ -14,19 +14,21 @@ export default function Login() {
   const loginUser = async () => {
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/auth/login",
+        import.meta.env.VITE_API_URL + "/api/auth/login",
         form
       );
 
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("username", res.data.username);
-      localStorage.setItem("email", res.data.email);
+      if (res.data.email) {
+        localStorage.setItem("email", res.data.email);
+      }
 
       toast.success("login successful");
 
       nav("/dashboard");
     } catch (err) {
-      alert(err.response?.data?.message || "Login failed");
+      toast.error(err.response?.data?.message || "Login failed");
     }
   };
 

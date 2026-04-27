@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 export default function Register() {
   const nav = useNavigate();
@@ -14,7 +15,7 @@ export default function Register() {
   const registerUser = async () => {
     try {
       await axios.post(
-        "http://localhost:5000/api/auth/register",
+        import.meta.env.VITE_API_URL + "/api/auth/register",
         form
       );
 
