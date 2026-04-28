@@ -17,7 +17,7 @@ export default function Navbar() {
     <nav className="bg-slate-800 p-4 flex justify-between items-center shadow-lg border-b border-slate-700 sticky top-0 z-50">
       <h1 className="text-2xl font-bold text-white">TASKY</h1>
       <div className="flex items-center gap-4">
-        <span className="text-slate-300 font-medium">{user}</span>
+        <span className="text-slate-300 font-medium">Hello! {user}</span>
         <button
           onClick={handleLogout}
           className="bg-rose-600 text-white px-4 py-2 rounded-none font-medium hover:bg-rose-700 transition-all"

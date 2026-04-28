@@ -33,15 +33,15 @@ export default function Login() {
   };
 
 return (
-    <div className="min-h-screen flex justify-center items-center bg-slate-900 px-4">
-      <div className="bg-slate-800 p-8 rounded-none w-full max-w-md shadow-2xl border border-slate-700">
-        <h1 className="text-4xl font-bold text-center mb-6 text-cyan-400">
+    <div className="min-h-screen flex justify-center items-center bg-black px-4 ">
+      <div className="bg-transparent p-8 rounded-3xl w-full max-w-md">
+        <h1 className="text-4xl font-bold text-center mb-6 text-white">
           Sign In
         </h1>
 
         <input
           placeholder="Username or Email"
-          className="w-full p-4 mb-4 rounded-none bg-slate-700 text-white border border-slate-600 placeholder-slate-400 focus:border-cyan-500 focus:outline-none transition-all"
+          className="w-full p-4 mb-4 rounded-3xl bg-slate-700 text-white border border-slate-600 placeholder-white focus:border-cyan-500 focus:outline-none transition-all"
           onChange={(e) =>
             setForm({ ...form, login: e.target.value })
           }
@@ -50,7 +50,7 @@ return (
         <input
           type="password"
           placeholder="Password"
-          className="w-full p-4 mb-6 rounded-none bg-slate-700 text-white border border-slate-600 placeholder-slate-400 focus:border-cyan-500 focus:outline-none transition-all"
+          className="w-full p-4 mb-6 rounded-3xl bg-slate-700 text-white border border-slate-600 placeholder-white focus:border-cyan-500 focus:outline-none transition-all"
           onChange={(e) =>
             setForm({ ...form, password: e.target.value })
           }
@@ -58,7 +58,7 @@ return (
 
         <button
           onClick={loginUser}
-          className="w-full bg-cyan-600 text-white p-4 rounded-none font-semibold hover:bg-cyan-700 transition-all"
+          className="w-full bg-cyan-600 text-white p-4 rounded-3xl font-semibold hover:bg-cyan-700 hover:text-white transition-all"
         >
           Login
         </button>

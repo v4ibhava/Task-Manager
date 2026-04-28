@@ -10,9 +10,24 @@ function App() {
 
   const API = import.meta.env.VITE_API_URL + "/api/tasks";
 
+  // Create axios instance with token
+  const getAxiosInstance = () => {
+    const token = localStorage.getItem("token");
+    return axios.create({
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  };
+
   const getTasks = async () => {
-    const res = await axios.get(API);
-    setTasks(res.data);
+    try {
+      const axiosInstance = getAxiosInstance();
+      const res = await axiosInstance.get(API);
+      setTasks(res.data);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to load tasks");
+    }
   };
 
   const filteredTasks = tasks.filter((task) =>
@@ -22,42 +37,40 @@ function App() {
   const addTask = async () => {
     try {
       if (!title.trim()) return;
-
-      console.log("API URL:", API);
-      console.log("Sending title:", title);
       
-      const res = await axios.post(API, { title });
-      console.log("Response:", res);
+      const axiosInstance = getAxiosInstance();
+      const res = await axiosInstance.post(API, { title });
       
       setTitle("");
       getTasks();
       toast.success("Task Added");
     } catch (err) {
       console.error("Error:", err);
-      console.error("Error response:", err.response);
       toast.error(err.response?.data?.message || "Failed to add task");
     }
   };
 
   const deleteTask = async (id) => {
     try {
-      await axios.delete(`${API}/${id}`);
+      const axiosInstance = getAxiosInstance();
+      await axiosInstance.delete(`${API}/${id}`);
       getTasks();
       toast.success("Task Deleted");
-    } catch {
-      toast.error("Delete failed");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Delete failed");
     }
   };
 
   const changeStatus = async (id, newStatus) => {
     try {
-      await axios.put(`${API}/${id}`, {
+      const axiosInstance = getAxiosInstance();
+      await axiosInstance.put(`${API}/${id}`, {
         status: newStatus,
       });
       getTasks();
       toast.success("Status Updated");
-    } catch {
-      toast.error("Update failed");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Update failed");
     }
   };
 
