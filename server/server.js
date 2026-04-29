@@ -4,6 +4,9 @@ const cors = require("cors");
 const taskRoutes = require("./routes/taskRoutes");
 const authRoutes = require("./routes/authRoutes");
 require("dotenv").config();
+const userRoutes = require("./routes/userRoutes");
+const teamRoutes = require("./routes/teamRoutes");
+
 
 const app = express();
 
@@ -37,6 +40,8 @@ app.get("/", (req, res) => {
 // routes
 app.use("/api/auth", authRoutes);
 app.use("/api", taskRoutes);
+app.use("/api", userRoutes);
+app.use("/api", teamRoutes);
 
 // mongodb
 mongoose

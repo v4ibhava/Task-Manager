@@ -6,31 +6,44 @@ const User = require("../models/User");
 
 // Register
 router.post("/register", async (req, res) => {
-  const { username, email, password } = req.body;
+  try {
+    const { username,
+      email,
+      password,
+      role,
+      team } = req.body;
 
-  const exist = await User.findOne({
-    $or: [{ email }, { username }],
-  });
-
-  if (exist) {
-    return res.status(400).json({
-      message: "User already exists",
+    const exist = await User.findOne({
+      $or: [{ email }, { username }],
     });
+
+    if (exist) {
+      return res.status(400).json({
+        message: "User already exists",
+      });
+    }
+
+    const hash = await bcrypt.hash(password, 10);
+
+    const userTeam = role === "manager" || role === "admin" ? null : (team || "general");
+
+    await User.create({
+      username,
+      email,
+      password: hash,
+      role: role || "employee",
+      team: userTeam
+    });
+
+    res.json({
+      message: "Registered successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "register failed"
+    })
   }
-
-  const hash = await bcrypt.hash(password, 10);
-
-  await User.create({
-    username,
-    email,
-    password: hash,
-  });
-
-  res.json({
-    message: "Registered successfully",
-  });
-});
-
+})
 // Login
 router.post("/login", async (req, res) => {
   try {
@@ -58,7 +71,9 @@ router.post("/login", async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user._id },
+      { id: user._id,
+        role: user.role
+       },
       "secretkey",
       { expiresIn: "7d" }
     );
@@ -67,6 +82,8 @@ router.post("/login", async (req, res) => {
       token,
       username: user.username,
       email: user.email,
+      role:user.role,
+      team: user.team
     });
   } catch (error) {
     console.log("Login error:", error);

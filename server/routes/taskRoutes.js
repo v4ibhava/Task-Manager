@@ -1,89 +1,154 @@
 const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
-const Task = require("../models/Task")
+const Task = require("../models/Task");
+const User = require("../models/User");
 
-// Middleware to verify token and extract userId
+// Verify Token
 const verifyToken = (req, res, next) => {
-    const token = req.headers.authorization?.split(" ")[1];
-    
-    if (!token) {
-        return res.status(401).json({ message: "No token provided" });
-    }
-    
-    try {
-        const decoded = jwt.verify(token, "secretkey");
-        req.userId = decoded.id;
-        next();
-    } catch (error) {
-        res.status(401).json({ message: "Invalid token" });
-    }
+  const token =
+    req.headers.authorization?.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({
+      message: "No token"
+    });
+  }
+
+  try {
+    const decoded = jwt.verify(
+      token,
+      "secretkey"
+    );
+
+    req.userId = decoded.id;
+    req.role = decoded.role;
+
+    next();
+  } catch {
+    res.status(401).json({
+      message: "Invalid token"
+    });
+  }
 };
 
-// Add Task
-router.post("/tasks", verifyToken, async(req, res) => {
+// Assign Task
+router.post(
+  "/tasks",
+  verifyToken,
+  async (req, res) => {
     try {
-        const task = await Task.create({ 
-            title: req.body.title,
-            userId: req.userId
-        });
-        res.json(task);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-})
+      const {
+        title,
+        description,
+        assignedTo
+      } = req.body;
 
-// get all tasks for logged-in user
-router.get("/tasks", verifyToken, async(req, res) => {
-    try {
-        const tasks = await Task.find({ userId: req.userId }).sort({ createdAt: -1});
-        res.json(tasks);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-})
+      const user = await User.findById(
+        req.userId
+      );
 
-//delete task
-router.delete("/tasks/:id", verifyToken, async (req, res) => {
-    try {
-        const task = await Task.findById(req.params.id);
-        
-        if (!task) {
-            return res.status(404).json({ message: "Task not found" });
-        }
-        
-        if (task.userId.toString() !== req.userId) {
-            return res.status(403).json({ message: "Unauthorized" });
-        }
-        
-        await Task.findByIdAndDelete(req.params.id);
-        res.json({ message: "Deleted"});
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-})
+      const task = await Task.create({
+        title,
+        description,
+        assignedTo,
+        assignedBy: req.userId,
+        team: user.team
+      });
 
-// update status
-router.put("/tasks/:id", verifyToken, async(req,res)=>{
+      res.json(task);
+    } catch (error) {
+      res.status(500).json({
+        error: error.message
+      });
+    }
+  }
+);
+
+// Get Tasks By Role
+router.get(
+  "/tasks",
+  verifyToken,
+  async (req, res) => {
     try {
-        const task = await Task.findById(req.params.id);
-        
-        if (!task) {
-            return res.status(404).json({ message: "Task not found" });
-        }
-        
-        if (task.userId.toString() !== req.userId) {
-            return res.status(403).json({ message: "Unauthorized" });
-        }
-        
-        const updatedTask = await Task.findByIdAndUpdate(req.params.id,
-            { status : req.body.status },
-            { new: true }
+      const user = await User.findById(
+        req.userId
+      );
+
+      let tasks = [];
+
+      if (user.role === "employee") {
+        tasks = await Task.find({
+          assignedTo: req.userId
+        })
+          .populate("assignedTo assignedBy")
+          .sort({ createdAt: -1 });
+      } else if (user.role === "tl") {
+        tasks = await Task.find({
+          team: user.team
+        })
+          .populate("assignedTo assignedBy")
+          .sort({ createdAt: -1 });
+      } else {
+        tasks = await Task.find()
+          .populate("assignedTo assignedBy")
+          .sort({ createdAt: -1 });
+      }
+
+      res.json(tasks);
+    } catch (error) {
+      res.status(500).json({
+        error: error.message
+      });
+    }
+  }
+);
+
+// Update Status
+router.put(
+  "/tasks/:id",
+  verifyToken,
+  async (req, res) => {
+    try {
+      const task =
+        await Task.findByIdAndUpdate(
+          req.params.id,
+          {
+            status: req.body.status
+          },
+          {
+            returnDocument: "after"
+          }
         );
-        res.json(updatedTask);
+
+      res.json(task);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+      res.status(500).json({
+        error: error.message
+      });
     }
-});
+  }
+);
+
+// Delete
+router.delete(
+  "/tasks/:id",
+  verifyToken,
+  async (req, res) => {
+    try {
+      await Task.findByIdAndDelete(
+        req.params.id
+      );
+
+      res.json({
+        message: "Deleted"
+      });
+    } catch (error) {
+      res.status(500).json({
+        error: error.message
+      });
+    }
+  }
+);
 
 module.exports = router;

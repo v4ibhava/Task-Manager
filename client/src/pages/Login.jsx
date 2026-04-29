@@ -20,9 +20,9 @@ export default function Login() {
 
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("username", res.data.username);
-      if (res.data.email) {
-        localStorage.setItem("email", res.data.email);
-      }
+      localStorage.setItem("email", res.data.email || "");
+      localStorage.setItem("role", res.data.role);
+      localStorage.setItem("team", res.data.team || "");
 
       toast.success("login successful");
 
