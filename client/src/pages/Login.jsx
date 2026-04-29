@@ -34,14 +34,14 @@ export default function Login() {
 
 return (
     <div className="min-h-screen flex justify-center items-center bg-black px-4 ">
-      <div className="bg-transparent p-8 rounded-3xl w-full max-w-md">
+      <div className="bg-zinc-900 border border-teal-900/50 p-8 rounded-3xl w-full max-w-md shadow-[0_0_40px_rgba(20,184,166,0.1)]">
         <h1 className="text-4xl font-bold text-center mb-6 text-white">
           Sign In
         </h1>
 
         <input
           placeholder="Username or Email"
-          className="w-full p-4 mb-4 rounded-3xl bg-slate-700 text-white border border-slate-600 placeholder-white focus:border-cyan-500 focus:outline-none transition-all"
+          className="w-full p-4 mb-4 rounded-3xl bg-black text-white border border-zinc-800 placeholder-zinc-500 focus:border-teal-500 focus:outline-none transition-all"
           onChange={(e) =>
             setForm({ ...form, login: e.target.value })
           }
@@ -50,7 +50,7 @@ return (
         <input
           type="password"
           placeholder="Password"
-          className="w-full p-4 mb-6 rounded-3xl bg-slate-700 text-white border border-slate-600 placeholder-white focus:border-cyan-500 focus:outline-none transition-all"
+          className="w-full p-4 mb-6 rounded-3xl bg-black text-white border border-zinc-800 placeholder-zinc-500 focus:border-teal-500 focus:outline-none transition-all"
           onChange={(e) =>
             setForm({ ...form, password: e.target.value })
           }
@@ -58,13 +58,13 @@ return (
 
         <button
           onClick={loginUser}
-          className="w-full bg-cyan-600 text-white p-4 rounded-3xl font-semibold hover:bg-cyan-700 hover:text-white transition-all"
+          className="w-full bg-teal-600 text-white p-4 rounded-3xl font-bold hover:bg-teal-500 hover:shadow-[0_0_20px_rgba(20,184,166,0.4)] transition-all"
         >
           Login
         </button>
 
-        <p className="text-slate-400 text-sm mt-6 text-center">
-          <Link to="/register" className="text-cyan-400 hover:text-cyan-300 hover:underline">Create Account</Link>
+        <p className="text-zinc-400 text-sm mt-6 text-center">
+          <Link to="/register" className="text-teal-400 font-medium hover:text-teal-300 hover:underline transition-colors">Create Account</Link>
         </p>
       </div>
     </div>

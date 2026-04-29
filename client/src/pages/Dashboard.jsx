@@ -175,13 +175,13 @@ function App() {
     <>
       <Navbar />
 
-      <div className="min-h-screen bg-slate-900 p-4 md:p-8">
+      <div className="min-h-screen bg-black p-4 md:p-8">
         <div className="max-w-7xl mx-auto space-y-6">
           
           {/* Dashboard Header Section */}
-          <div className="bg-slate-800 p-6 rounded-lg shadow-xl border border-slate-700 flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="bg-zinc-900 p-6 rounded-lg shadow-[0_0_20px_rgba(20,184,166,0.05)] border border-teal-900/30 flex flex-col md:flex-row justify-between items-center gap-4">
             <h1 className="text-2xl md:text-3xl font-bold text-white text-center md:text-left">
-              {username} <span className="text-cyan-500">|</span> {role?.toUpperCase()} DASHBOARD
+              {username} <span className="text-teal-500">|</span> {role?.toUpperCase()} DASHBOARD
             </h1>
             
             {/* Search Bar (Only visible for Manager/Admin/TL) */}
@@ -192,7 +192,7 @@ function App() {
                   placeholder="Search tasks by title..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full px-4 py-3 rounded-md bg-slate-700 text-white border border-slate-600 focus:outline-none focus:border-cyan-500"
+                  className="w-full px-4 py-3 rounded-md bg-black text-white border border-zinc-800 focus:outline-none focus:border-teal-500 transition-all placeholder-zinc-500"
                 />
               </div>
             )}
@@ -203,35 +203,35 @@ function App() {
             
             {/* Left Column: Tasks List */}
             <div className={`space-y-4 ${role !== "employee" ? "lg:col-span-2" : ""}`}>
-              <h2 className="text-xl font-bold text-white mb-2 border-b border-slate-700 pb-2">Tasks List</h2>
+              <h2 className="text-xl font-bold text-white mb-2 border-b border-teal-900/50 pb-2">Tasks List</h2>
               
               <div className="grid grid-cols-1 gap-4">
                 {filteredTasks.map((task) => (
                   <div
                     key={task._id}
-                    className="flex flex-col sm:flex-row sm:justify-between sm:items-center bg-slate-800 rounded-lg p-5 border border-slate-700 shadow-md gap-4"
+                    className="flex flex-col sm:flex-row sm:justify-between sm:items-center bg-zinc-900 rounded-lg p-5 border border-zinc-800 shadow-md gap-4"
                   >
                     {/* Task Details */}
                     <div className={task.status === "completed" ? "opacity-60" : ""}>
-                      <h3 className={`text-lg font-bold ${task.status === "completed" ? "line-through text-slate-400" : "text-white"}`}>
+                      <h3 className={`text-lg font-bold ${task.status === "completed" ? "line-through text-zinc-500" : "text-white"}`}>
                         {task.title}
                       </h3>
 
                       {role !== "employee" && task.description && (
-                        <p className="text-sm text-slate-300 mt-1 mb-2">{task.description}</p>
+                        <p className="text-sm text-zinc-400 mt-1 mb-2">{task.description}</p>
                       )}
 
                       <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
-                        <p className="text-xs text-cyan-400">
-                          <span className="text-slate-500">By:</span> {task.assignedBy?.username}
+                        <p className="text-xs text-teal-400">
+                          <span className="text-zinc-500">By:</span> {task.assignedBy?.username}
                         </p>
                         {role !== "employee" && (
                           <p className="text-xs text-amber-400">
-                            <span className="text-slate-500">To:</span> {task.assignedTo?.username}
+                            <span className="text-zinc-500">To:</span> {task.assignedTo?.username}
                           </p>
                         )}
                         {role !== "employee" && (
-                          <p className="text-xs text-slate-500">
+                          <p className="text-xs text-zinc-500">
                             {new Date(task.createdAt).toLocaleDateString()}
                           </p>
                         )}
@@ -243,7 +243,7 @@ function App() {
                       <select
                         value={task.status}
                         onChange={(e) => changeStatus(task._id, e.target.value)}
-                        className="px-3 py-2 rounded bg-slate-700 text-white border border-slate-600 focus:outline-none"
+                        className="px-3 py-2 rounded bg-black text-white border border-zinc-700 focus:outline-none focus:border-teal-500 transition-all"
                       >
                         <option value="pending">Pending</option>
                         <option value="ongoing">Ongoing</option>
@@ -253,7 +253,7 @@ function App() {
                       {role !== "employee" && (
                         <button
                           onClick={() => deleteTask(task._id)}
-                          className="bg-rose-600 hover:bg-rose-700 transition-colors text-white px-4 py-2 rounded"
+                          className="bg-transparent border border-rose-600/50 text-rose-500 hover:bg-rose-600 hover:text-white transition-colors px-4 py-2 rounded"
                         >
                           Delete
                         </button>
@@ -263,8 +263,8 @@ function App() {
                 ))}
 
                 {filteredTasks.length === 0 && (
-                  <div className="text-center bg-slate-800 rounded-lg p-8 border border-slate-700">
-                    <p className="text-slate-400 text-lg">No Tasks Found</p>
+                  <div className="text-center bg-zinc-900 rounded-lg p-8 border border-zinc-800">
+                    <p className="text-zinc-500 text-lg">No Tasks Found</p>
                   </div>
                 )}
               </div>
@@ -275,28 +275,28 @@ function App() {
               <div className="space-y-6">
                 
                 {/* Assign Task Section */}
-                <div className="bg-slate-800 p-6 rounded-lg shadow-xl border border-slate-700">
-                  <h2 className="text-xl font-bold text-white mb-4 border-b border-slate-700 pb-2">Assign New Task</h2>
+                <div className="bg-zinc-900 p-6 rounded-lg shadow-[0_0_20px_rgba(20,184,166,0.05)] border border-teal-900/30">
+                  <h2 className="text-xl font-bold text-white mb-4 border-b border-teal-900/50 pb-2">Assign New Task</h2>
                   <div className="space-y-4">
                     <input
                       type="text"
                       placeholder="Task Title"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      className="w-full px-4 py-3 rounded bg-slate-700 text-white border border-slate-600 focus:outline-none focus:border-cyan-500"
+                      className="w-full px-4 py-3 rounded bg-black text-white border border-zinc-800 focus:outline-none focus:border-teal-500 transition-all placeholder-zinc-500"
                     />
 
                     <textarea
                       placeholder="Task Description"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      className="w-full px-4 py-3 rounded bg-slate-700 text-white border border-slate-600 focus:outline-none focus:border-cyan-500 min-h-[100px]"
+                      className="w-full px-4 py-3 rounded bg-black text-white border border-zinc-800 focus:outline-none focus:border-teal-500 transition-all placeholder-zinc-500 min-h-[100px]"
                     />
 
                     <select
                       value={assignedTo}
                       onChange={(e) => setAssignedTo(e.target.value)}
-                      className="w-full px-4 py-3 rounded bg-slate-700 text-white border border-slate-600 focus:outline-none focus:border-cyan-500"
+                      className="w-full px-4 py-3 rounded bg-black text-white border border-zinc-800 focus:outline-none focus:border-teal-500 transition-all"
                     >
                       <option value="">Select Employee</option>
                       {users
@@ -327,7 +327,7 @@ function App() {
 
                     <button
                       onClick={addTask}
-                      className="w-full bg-cyan-600 hover:bg-cyan-700 transition-colors font-bold text-white py-3 rounded shadow-md"
+                      className="w-full bg-teal-600 hover:bg-teal-500 transition-all font-bold text-white py-3 rounded shadow-[0_0_15px_rgba(20,184,166,0.2)]"
                     >
                       Assign Task
                     </button>
@@ -336,8 +336,8 @@ function App() {
 
                 {/* Team Management Section (Only visible to manager/admin) */}
                 {(role === "manager" || role === "admin") && (
-                  <div className="bg-slate-800 p-6 rounded-lg shadow-xl border border-slate-700">
-                    <h2 className="text-xl font-bold text-white mb-4 border-b border-slate-700 pb-2">Team Management</h2>
+                  <div className="bg-zinc-900 p-6 rounded-lg shadow-[0_0_20px_rgba(20,184,166,0.05)] border border-teal-900/30">
+                    <h2 className="text-xl font-bold text-white mb-4 border-b border-teal-900/50 pb-2">Team Management</h2>
 
                     {/* Create Team Form */}
                     <div className="space-y-4 mb-6">
@@ -346,13 +346,13 @@ function App() {
                         placeholder="New Team Name"
                         value={newTeamName}
                         onChange={(e) => setNewTeamName(e.target.value)}
-                        className="w-full px-4 py-3 rounded bg-slate-700 text-white border border-slate-600 focus:outline-none focus:border-green-500"
+                        className="w-full px-4 py-3 rounded bg-black text-white border border-zinc-800 focus:outline-none focus:border-teal-500 transition-all placeholder-zinc-500"
                       />
 
                       <select
                         value={teamLeader}
                         onChange={(e) => setTeamLeader(e.target.value)}
-                        className="w-full px-4 py-3 rounded bg-slate-700 text-white border border-slate-600 focus:outline-none focus:border-green-500"
+                        className="w-full px-4 py-3 rounded bg-black text-white border border-zinc-800 focus:outline-none focus:border-teal-500 transition-all"
                       >
                         <option value="">Select Team Leader</option>
                         {users
@@ -366,7 +366,7 @@ function App() {
 
                       <button
                         onClick={createTeam}
-                        className="w-full bg-green-600 hover:bg-green-700 transition-colors font-bold text-white py-3 rounded shadow-md"
+                        className="w-full bg-teal-600 hover:bg-teal-500 transition-all font-bold text-white py-3 rounded shadow-[0_0_15px_rgba(20,184,166,0.2)]"
                       >
                         Create Team
                       </button>
@@ -374,23 +374,23 @@ function App() {
 
                     {/* Existing Teams List */}
                     <div className="space-y-3">
-                      <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Existing Teams</h3>
+                      <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-2">Existing Teams</h3>
                       {teams.map((team) => {
                         const leaderUser = users.find((u) => u._id === team.leader || u._id === team.leader?._id);
                         return (
                           <div
                             key={team._id}
-                            className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-slate-700 rounded p-3 border border-slate-600 gap-3"
+                            className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-black rounded p-3 border border-zinc-800 gap-3"
                           >
                             <div>
                               <span className="text-white font-semibold block">{team.name}</span>
-                              <span className="text-xs text-amber-400">
-                                <span className="text-slate-400">TL:</span> {leaderUser ? leaderUser.username : team.leader?.username || team.leaderName || "None"}
+                              <span className="text-xs text-teal-400">
+                                <span className="text-zinc-500">TL:</span> {leaderUser ? leaderUser.username : team.leader?.username || team.leaderName || "None"}
                               </span>
                             </div>
                             <button
                               onClick={() => deleteTeam(team._id)}
-                              className="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                              className="bg-transparent border border-rose-600/50 text-rose-500 hover:bg-rose-600 hover:text-white px-3 py-1 rounded text-sm transition-colors"
                             >
                               Delete
                             </button>
@@ -398,7 +398,7 @@ function App() {
                         );
                       })}
                       {teams.length === 0 && (
-                         <p className="text-xs text-slate-500 italic">No teams created yet.</p>
+                         <p className="text-xs text-zinc-500 italic">No teams created yet.</p>
                       )}
                     </div>
                   </div>

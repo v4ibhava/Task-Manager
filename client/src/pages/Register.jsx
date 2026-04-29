@@ -77,15 +77,15 @@ export default function Register() {
 
   return (
     <div className="min-h-screen flex justify-center items-center bg-black px-4">
-      <div className="w-full max-w-md p-8">
+      <div className="w-full max-w-md p-8 bg-zinc-900 border border-teal-900/50 rounded-3xl shadow-[0_0_40px_rgba(20,184,166,0.1)]">
 
-        <h1 className="text-4xl font-bold text-center mb-6 text-cyan-400">
+        <h1 className="text-4xl font-bold text-center mb-6 text-white">
           Create Account
         </h1>
 
         <input
           placeholder="Username"
-          className="w-full p-4 mb-4 rounded-3xl bg-slate-700 text-white"
+          className="w-full p-4 mb-4 rounded-3xl bg-black text-white border border-zinc-800 placeholder-zinc-500 focus:border-teal-500 focus:outline-none transition-all"
           onChange={(e) =>
             setForm({
               ...form,
@@ -97,7 +97,7 @@ export default function Register() {
 
         <input
           placeholder="Email"
-          className="w-full p-4 mb-4 rounded-3xl bg-slate-700 text-white"
+          className="w-full p-4 mb-4 rounded-3xl bg-black text-white border border-zinc-800 placeholder-zinc-500 focus:border-teal-500 focus:outline-none transition-all"
           onChange={(e) =>
             setForm({
               ...form,
@@ -110,7 +110,7 @@ export default function Register() {
         <input
           type="password"
           placeholder="Password"
-          className="w-full p-4 mb-4 rounded-3xl bg-slate-700 text-white"
+          className="w-full p-4 mb-4 rounded-3xl bg-black text-white border border-zinc-800 placeholder-zinc-500 focus:border-teal-500 focus:outline-none transition-all"
           onChange={(e) =>
             setForm({
               ...form,
@@ -121,7 +121,7 @@ export default function Register() {
         />
 
         <select
-          className="w-full p-4 mb-4 rounded-3xl bg-slate-700 text-white"
+          className="w-full p-4 mb-6 rounded-3xl bg-black text-white border border-zinc-800 focus:border-teal-500 focus:outline-none transition-all"
           onChange={(e) =>
             setForm({
               ...form,
@@ -148,13 +148,13 @@ export default function Register() {
           onClick={
             registerUser
           }
-          className="w-full bg-cyan-600 text-white p-4 rounded-3xl"
+          className="w-full bg-teal-600 text-white p-4 rounded-3xl font-bold hover:bg-teal-500 hover:shadow-[0_0_20px_rgba(20,184,166,0.4)] transition-all"
         >
           Register
         </button>
 
-        <p className="text-center mt-6 text-sm text-slate-400">
-          <Link to="/">
+        <p className="text-center mt-6 text-sm text-zinc-400">
+          <Link to="/" className="text-teal-400 font-medium hover:text-teal-300 hover:underline transition-colors">
             Login
           </Link>
         </p>
