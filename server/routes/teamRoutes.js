@@ -35,9 +35,9 @@ const verifyToken = (req, res, next) => {
 router.get(
   "/teams",
   async (req, res) => {
-    const teams = await Team.find().sort({
-      name: 1
-    });
+    const teams = await Team.find()
+      .populate("leader", "username role team")
+      .sort({ name: 1 });
 
     res.json(teams);
   }
@@ -97,9 +97,16 @@ router.put(
         });
       }
 
+      // Update the user's role and team
       await User.findByIdAndUpdate(
         leaderId,
         { role: "tl", team: req.body.teamName }
+      );
+
+      // Store the leader reference on the team
+      await Team.findByIdAndUpdate(
+        req.params.id,
+        { leader: leaderId }
       );
 
       res.json({

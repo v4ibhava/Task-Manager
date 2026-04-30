@@ -40,12 +40,24 @@ export default function Register() {
           return;
         }
 
+        // Basic email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(form.email)) {
+          toast.error("Enter a valid email address");
+          return;
+        }
+
         if (
           !form.password.trim()
         ) {
           toast.error(
             "Enter password"
           );
+          return;
+        }
+
+        if (form.password.length < 6) {
+          toast.error("Password must be at least 6 characters");
           return;
         }
 

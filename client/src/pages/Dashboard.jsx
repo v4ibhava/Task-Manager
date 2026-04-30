@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Navbar from "../components/Navbar";
+import TaskModal from "../components/TaskModal";
 import toast from "react-hot-toast";
 
 function App() {
@@ -17,9 +18,13 @@ function App() {
   const [newTeamName, setNewTeamName] = useState("");
   const [teamLeader, setTeamLeader] = useState("");
 
+  // State for task details modal
+  const [selectedTask, setSelectedTask] = useState(null);
+
   // Get current user details from local storage
   const role = localStorage.getItem("role");
   const username = localStorage.getItem("username");
+  const userId = localStorage.getItem("userId");
 
   const API = import.meta.env.VITE_API_URL + "/api/tasks";
 
@@ -69,8 +74,8 @@ function App() {
       setAssignedTo("");
       getTasks(); // Refresh list
       toast.success("Task Added");
-    } catch {
-      toast.error("Failed to add task");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to add task");
     }
   };
 
@@ -81,8 +86,8 @@ function App() {
       await axiosInstance.delete(`${API}/${id}`);
       getTasks();
       toast.success("Task Deleted");
-    } catch {
-      toast.error("Delete failed");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Delete failed");
     }
   };
 
@@ -93,8 +98,8 @@ function App() {
       await axiosInstance.put(`${API}/${id}`, { status: newStatus });
       getTasks();
       toast.success("Status Updated");
-    } catch {
-      toast.error("Update failed");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Update failed");
     }
   };
 
@@ -160,6 +165,28 @@ function App() {
     }
   };
 
+  // Check if current user can change status for a given task
+  const canChangeStatus = (task) => {
+    // Managers, admins, TLs can change any task status
+    if (role === "manager" || role === "admin" || role === "tl") return true;
+    // Employees can only change status of tasks assigned to them
+    if (role === "employee" && task.assignedTo?._id === userId) return true;
+    return false;
+  };
+
+  // Status display helpers
+  const statusStyles = {
+    pending: "bg-amber-500/15 text-amber-400 border border-amber-500/30",
+    ongoing: "bg-blue-500/15 text-blue-400 border border-blue-500/30",
+    completed: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
+  };
+
+  const statusLabel = {
+    pending: "Pending",
+    ongoing: "In Progress",
+    completed: "Completed",
+  };
+
   // Initial load
   useEffect(() => {
     if (!localStorage.getItem("token")) {
@@ -184,89 +211,181 @@ function App() {
               {username} <span className="text-teal-500">|</span> {role?.toUpperCase()} DASHBOARD
             </h1>
             
-            {/* Search Bar (Only visible for Manager/Admin/TL) */}
-            {role !== "employee" && (
-              <div className="w-full md:w-1/3">
-                <input
-                  type="text"
-                  placeholder="Search tasks by title..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full px-4 py-3 rounded-md bg-black text-white border border-zinc-800 focus:outline-none focus:border-teal-500 transition-all placeholder-zinc-500"
-                />
-              </div>
-            )}
+            {/* Search Bar */}
+            <div className="w-full md:w-1/3">
+              <input
+                type="text"
+                placeholder="Search tasks by title..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full px-4 py-3 rounded-md bg-black text-white border border-zinc-800 focus:outline-none focus:border-teal-500 transition-all placeholder-zinc-500"
+              />
+            </div>
           </div>
 
           {/* Main Content Grid */}
           <div className={`grid grid-cols-1 ${role !== "employee" ? "lg:grid-cols-3" : ""} gap-6`}>
             
-            {/* Left Column: Tasks List */}
+            {/* Left Column: Tasks Table */}
             <div className={`space-y-4 ${role !== "employee" ? "lg:col-span-2" : ""}`}>
-              <h2 className="text-xl font-bold text-white mb-2 border-b border-teal-900/50 pb-2">Tasks List</h2>
+              <h2 className="text-xl font-bold text-white mb-2 border-b border-teal-900/50 pb-2">
+                Tasks List
+                <span className="text-sm font-normal text-zinc-500 ml-3">
+                  {filteredTasks.length} task{filteredTasks.length !== 1 ? "s" : ""}
+                </span>
+              </h2>
               
-              <div className="grid grid-cols-1 gap-4">
-                {filteredTasks.map((task) => (
-                  <div
-                    key={task._id}
-                    className="flex flex-col sm:flex-row sm:justify-between sm:items-center bg-zinc-900 rounded-lg p-5 border border-zinc-800 shadow-md gap-4"
-                  >
-                    {/* Task Details */}
-                    <div className={task.status === "completed" ? "opacity-60" : ""}>
-                      <h3 className={`text-lg font-bold ${task.status === "completed" ? "line-through text-zinc-500" : "text-white"}`}>
-                        {task.title}
-                      </h3>
-
-                      {role !== "employee" && task.description && (
-                        <p className="text-sm text-zinc-400 mt-1 mb-2">{task.description}</p>
-                      )}
-
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
-                        <p className="text-xs text-teal-400">
-                          <span className="text-zinc-500">By:</span> {task.assignedBy?.username}
-                        </p>
+              {/* Table Container */}
+              <div className="bg-zinc-900 rounded-lg border border-zinc-800 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    {/* Table Header */}
+                    <thead>
+                      <tr className="border-b border-zinc-800 bg-zinc-900/80">
+                        <th className="px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                          Title
+                        </th>
                         {role !== "employee" && (
-                          <p className="text-xs text-amber-400">
-                            <span className="text-zinc-500">To:</span> {task.assignedTo?.username}
-                          </p>
+                          <th className="px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wider hidden md:table-cell">
+                            Assigned To
+                          </th>
                         )}
-                        {role !== "employee" && (
-                          <p className="text-xs text-zinc-500">
-                            {new Date(task.createdAt).toLocaleDateString()}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                        <th className="px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wider hidden sm:table-cell">
+                          Assigned By
+                        </th>
+                        <th className="px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wider hidden lg:table-cell">
+                          Date
+                        </th>
+                        <th className="px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wider text-right">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
 
-                    {/* Task Actions */}
-                    <div className="flex sm:flex-col md:flex-row gap-2 shrink-0">
-                      <select
-                        value={task.status}
-                        onChange={(e) => changeStatus(task._id, e.target.value)}
-                        className="px-3 py-2 rounded bg-black text-white border border-zinc-700 focus:outline-none focus:border-teal-500 transition-all"
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="ongoing">Ongoing</option>
-                        <option value="completed">Completed</option>
-                      </select>
-
-                      {role !== "employee" && (
-                        <button
-                          onClick={() => deleteTask(task._id)}
-                          className="bg-transparent border border-rose-600/50 text-rose-500 hover:bg-rose-600 hover:text-white transition-colors px-4 py-2 rounded"
+                    {/* Table Body */}
+                    <tbody className="divide-y divide-zinc-800/50">
+                      {filteredTasks.map((task) => (
+                        <tr
+                          key={task._id}
+                          className={`hover:bg-zinc-800/40 transition-colors cursor-pointer ${
+                            task.status === "completed" ? "opacity-60" : ""
+                          }`}
+                          onClick={() => setSelectedTask(task)}
                         >
-                          Delete
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                          {/* Title + Description preview */}
+                          <td className="px-4 py-3.5">
+                            <p
+                              className={`font-semibold text-sm ${
+                                task.status === "completed"
+                                  ? "line-through text-zinc-500"
+                                  : "text-white"
+                              }`}
+                            >
+                              {task.title}
+                            </p>
+                            {task.description && (
+                              <p className="text-xs text-zinc-500 mt-0.5 truncate max-w-[200px]">
+                                {task.description}
+                              </p>
+                            )}
+                          </td>
 
-                {filteredTasks.length === 0 && (
-                  <div className="text-center bg-zinc-900 rounded-lg p-8 border border-zinc-800">
-                    <p className="text-zinc-500 text-lg">No Tasks Found</p>
-                  </div>
-                )}
+                          {/* Assigned To (non-employees only) */}
+                          {role !== "employee" && (
+                            <td className="px-4 py-3.5 hidden md:table-cell">
+                              <span className="text-sm text-amber-400 font-medium">
+                                {task.assignedTo?.username || "—"}
+                              </span>
+                            </td>
+                          )}
+
+                          {/* Assigned By */}
+                          <td className="px-4 py-3.5 hidden sm:table-cell">
+                            <span className="text-sm text-teal-400">
+                              {task.assignedBy?.username || "—"}
+                            </span>
+                          </td>
+
+                          {/* Status Badge */}
+                          <td className="px-4 py-3.5">
+                            <span
+                              className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
+                                statusStyles[task.status] || "bg-zinc-800 text-zinc-400"
+                              }`}
+                            >
+                              {statusLabel[task.status] || task.status}
+                            </span>
+                          </td>
+
+                          {/* Date */}
+                          <td className="px-4 py-3.5 hidden lg:table-cell">
+                            <span className="text-xs text-zinc-500">
+                              {new Date(task.createdAt).toLocaleDateString()}
+                            </span>
+                          </td>
+
+                          {/* Actions */}
+                          <td className="px-4 py-3.5 text-right">
+                            <div
+                              className="flex items-center justify-end gap-2"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {/* Status Dropdown — only if user has permission */}
+                              {canChangeStatus(task) && (
+                                <select
+                                  value={task.status}
+                                  onChange={(e) =>
+                                    changeStatus(task._id, e.target.value)
+                                  }
+                                  className="px-2 py-1.5 rounded bg-black text-white text-xs border border-zinc-700 focus:outline-none focus:border-teal-500 transition-all"
+                                >
+                                  <option value="pending">Pending</option>
+                                  <option value="ongoing">In Progress</option>
+                                  <option value="completed">Completed</option>
+                                </select>
+                              )}
+
+                              {/* View button */}
+                              <button
+                                onClick={() => setSelectedTask(task)}
+                                className="text-teal-400 hover:text-teal-300 transition-colors text-xs border border-teal-700/50 px-2.5 py-1.5 rounded hover:bg-teal-900/30"
+                              >
+                                View
+                              </button>
+
+                              {/* Delete button (non-employees only) */}
+                              {role !== "employee" && (
+                                <button
+                                  onClick={() => deleteTask(task._id)}
+                                  className="text-rose-500 hover:text-white hover:bg-rose-600 transition-colors text-xs border border-rose-600/50 px-2.5 py-1.5 rounded"
+                                >
+                                  Delete
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {/* Empty State */}
+                  {filteredTasks.length === 0 && (
+                    <div className="text-center py-12">
+                      <p className="text-zinc-500 text-lg">No Tasks Found</p>
+                      <p className="text-zinc-600 text-sm mt-1">
+                        {search
+                          ? "Try a different search term"
+                          : role === "employee"
+                          ? "No tasks have been assigned to you yet"
+                          : "Create a new task to get started"}
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -302,7 +421,6 @@ function App() {
                       {users
                         .filter((user) => {
                           const myRole = localStorage.getItem("role");
-                          const myTeam = localStorage.getItem("team");
                           const myName = localStorage.getItem("username");
 
                           if (user.username === myName) return false;
@@ -376,7 +494,6 @@ function App() {
                     <div className="space-y-3">
                       <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-2">Existing Teams</h3>
                       {teams.map((team) => {
-                        const leaderUser = users.find((u) => u._id === team.leader || u._id === team.leader?._id);
                         return (
                           <div
                             key={team._id}
@@ -385,7 +502,7 @@ function App() {
                             <div>
                               <span className="text-white font-semibold block">{team.name}</span>
                               <span className="text-xs text-teal-400">
-                                <span className="text-zinc-500">TL:</span> {leaderUser ? leaderUser.username : team.leader?.username || team.leaderName || "None"}
+                                <span className="text-zinc-500">TL:</span> {team.leader?.username || "None"}
                               </span>
                             </div>
                             <button
@@ -408,6 +525,15 @@ function App() {
           </div>
         </div>
       </div>
+
+      {/* Task Details Modal */}
+      {selectedTask && (
+        <TaskModal
+          task={selectedTask}
+          onClose={() => setSelectedTask(null)}
+          role={role}
+        />
+      )}
     </>
   );
 }

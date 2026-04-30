@@ -13,6 +13,33 @@ router.post("/register", async (req, res) => {
       role,
       team } = req.body;
 
+    // --- Server-side validation ---
+    if (!username || !username.trim()) {
+      return res.status(400).json({ message: "Username is required" });
+    }
+
+    if (!email || !email.trim()) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
+
+    if (!password || !password.trim()) {
+      return res.status(400).json({ message: "Password is required" });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
+    }
+
+    const validRoles = ["employee", "tl", "manager", "admin"];
+    if (role && !validRoles.includes(role)) {
+      return res.status(400).json({ message: "Invalid role" });
+    }
+
     const exist = await User.findOne({
       $or: [{ email }, { username }],
     });
@@ -80,6 +107,7 @@ router.post("/login", async (req, res) => {
 
     res.json({
       token,
+      userId: user._id,
       username: user.username,
       email: user.email,
       role:user.role,

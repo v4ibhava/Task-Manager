@@ -10,6 +10,12 @@ const teamSchema = new mongoose.Schema(
             trim: true
         },
 
+        leader: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            default: null
+        },
+
         createdBy : {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
