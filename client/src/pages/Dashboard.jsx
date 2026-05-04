@@ -11,6 +11,15 @@ function App() {
   const [search, setSearch] = useState("");
   const [description, setDescription] = useState("");
   const [assignedTo, setAssignedTo] = useState("");
+  const [assigneeSearch, setAssigneeSearch] = useState("");
+
+  // Pagination, Filter, Sort, Stats state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [order, setOrder] = useState("desc");
+  const [stats, setStats] = useState({ pending: 0, ongoing: 0, completed: 0 });
 
   // State for users and teams
   const [users, setUsers] = useState([]);
@@ -42,17 +51,22 @@ function App() {
   const getTasks = async () => {
     try {
       const axiosInstance = getAxiosInstance();
-      const res = await axiosInstance.get(API);
-      setTasks(res.data);
+      const params = {
+        page: currentPage,
+        limit: 10,
+        search,
+        status: statusFilter,
+        sortBy,
+        order
+      };
+      const res = await axiosInstance.get(API, { params });
+      setTasks(res.data.tasks);
+      setTotalPages(res.data.totalPages || 1);
+      setStats(res.data.stats || { pending: 0, ongoing: 0, completed: 0 });
     } catch (error) {
       toast.error("Failed to load tasks");
     }
   };
-
-  // Filter tasks based on search input
-  const filteredTasks = tasks.filter((task) =>
-    task.title.toLowerCase().includes(search.toLowerCase())
-  );
 
   // Add a new task and assign it to an employee
   const addTask = async () => {
@@ -187,15 +201,24 @@ function App() {
     completed: "Completed",
   };
 
-  // Initial load
+  // Initial load and dependency updates
   useEffect(() => {
     if (!localStorage.getItem("token")) {
       window.location.href = "/";
       return;
     }
-    getTasks();
-    getUsers();
-    getTeams();
+    const delayDebounceFn = setTimeout(() => {
+      getTasks();
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [search, currentPage, statusFilter, sortBy, order]);
+
+  useEffect(() => {
+    if (localStorage.getItem("token")) {
+      getUsers();
+      getTeams();
+    }
   }, []);
 
   return (
@@ -223,6 +246,22 @@ function App() {
             </div>
           </div>
 
+          {/* Stats Summary */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-zinc-900 border border-amber-500/30 rounded-lg p-4 flex flex-col items-center justify-center">
+              <span className="text-amber-400 text-3xl font-bold">{stats.pending || 0}</span>
+              <span className="text-zinc-400 text-sm uppercase tracking-wider mt-1">Pending</span>
+            </div>
+            <div className="bg-zinc-900 border border-blue-500/30 rounded-lg p-4 flex flex-col items-center justify-center">
+              <span className="text-blue-400 text-3xl font-bold">{stats.ongoing || 0}</span>
+              <span className="text-zinc-400 text-sm uppercase tracking-wider mt-1">In Progress</span>
+            </div>
+            <div className="bg-zinc-900 border border-emerald-500/30 rounded-lg p-4 flex flex-col items-center justify-center">
+              <span className="text-emerald-400 text-3xl font-bold">{stats.completed || 0}</span>
+              <span className="text-zinc-400 text-sm uppercase tracking-wider mt-1">Completed</span>
+            </div>
+          </div>
+
           {/* Main Content Grid */}
           <div className={`grid grid-cols-1 ${role !== "employee" ? "lg:grid-cols-3" : ""} gap-6`}>
             
@@ -231,9 +270,51 @@ function App() {
               <h2 className="text-xl font-bold text-white mb-2 border-b border-teal-900/50 pb-2">
                 Tasks List
                 <span className="text-sm font-normal text-zinc-500 ml-3">
-                  {filteredTasks.length} task{filteredTasks.length !== 1 ? "s" : ""}
+                  {tasks.length} task{tasks.length !== 1 ? "s" : ""}
                 </span>
               </h2>
+
+              {/* Filters & Sorting */}
+              <div className="flex flex-wrap gap-4 items-center mb-4 bg-zinc-900 p-4 rounded-lg border border-zinc-800">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-zinc-400">Status:</label>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+                    className="px-3 py-1.5 rounded bg-black text-white text-sm border border-zinc-700 focus:outline-none focus:border-teal-500"
+                  >
+                    <option value="all">All</option>
+                    <option value="pending">Pending</option>
+                    <option value="ongoing">In Progress</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-zinc-400">Sort By:</label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}
+                    className="px-3 py-1.5 rounded bg-black text-white text-sm border border-zinc-700 focus:outline-none focus:border-teal-500"
+                  >
+                    <option value="createdAt">Date Created</option>
+                    <option value="title">Title</option>
+                    <option value="status">Status</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-zinc-400">Order:</label>
+                  <select
+                    value={order}
+                    onChange={(e) => { setOrder(e.target.value); setCurrentPage(1); }}
+                    className="px-3 py-1.5 rounded bg-black text-white text-sm border border-zinc-700 focus:outline-none focus:border-teal-500"
+                  >
+                    <option value="desc">Descending</option>
+                    <option value="asc">Ascending</option>
+                  </select>
+                </div>
+              </div>
               
               {/* Table Container */}
               <div className="bg-zinc-900 rounded-lg border border-zinc-800 overflow-hidden">
@@ -267,7 +348,7 @@ function App() {
 
                     {/* Table Body */}
                     <tbody className="divide-y divide-zinc-800/50">
-                      {filteredTasks.map((task) => (
+                      {tasks.map((task) => (
                         <tr
                           key={task._id}
                           className={`hover:bg-zinc-800/40 transition-colors cursor-pointer ${
@@ -373,12 +454,12 @@ function App() {
                   </table>
 
                   {/* Empty State */}
-                  {filteredTasks.length === 0 && (
+                  {tasks.length === 0 && (
                     <div className="text-center py-12">
                       <p className="text-zinc-500 text-lg">No Tasks Found</p>
                       <p className="text-zinc-600 text-sm mt-1">
-                        {search
-                          ? "Try a different search term"
+                        {search || statusFilter !== "all"
+                          ? "Try different search/filters"
                           : role === "employee"
                           ? "No tasks have been assigned to you yet"
                           : "Create a new task to get started"}
@@ -386,6 +467,29 @@ function App() {
                     </div>
                   )}
                 </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="px-4 py-3 border-t border-zinc-800 bg-zinc-900/50 flex items-center justify-between">
+                    <button
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="px-3 py-1 text-sm bg-zinc-800 text-white rounded hover:bg-zinc-700 disabled:opacity-50 transition-colors"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-sm text-zinc-400">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-1 text-sm bg-zinc-800 text-white rounded hover:bg-zinc-700 disabled:opacity-50 transition-colors"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -412,36 +516,55 @@ function App() {
                       className="w-full px-4 py-3 rounded bg-black text-white border border-zinc-800 focus:outline-none focus:border-teal-500 transition-all placeholder-zinc-500 min-h-[100px]"
                     />
 
-                    <select
-                      value={assignedTo}
-                      onChange={(e) => setAssignedTo(e.target.value)}
-                      className="w-full px-4 py-3 rounded bg-black text-white border border-zinc-800 focus:outline-none focus:border-teal-500 transition-all"
-                    >
-                      <option value="">Select Employee</option>
-                      {users
-                        .filter((user) => {
-                          const myRole = localStorage.getItem("role");
-                          const myName = localStorage.getItem("username");
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                        Search & Select Assignee
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Search by name or role..."
+                        value={assigneeSearch}
+                        onChange={(e) => setAssigneeSearch(e.target.value)}
+                        className="w-full px-4 py-2 rounded bg-black text-white border border-zinc-800 focus:outline-none focus:border-teal-500 transition-all placeholder-zinc-600 text-sm"
+                      />
+                      <select
+                        value={assignedTo}
+                        onChange={(e) => setAssignedTo(e.target.value)}
+                        className="w-full px-4 py-3 rounded bg-black text-white border border-zinc-800 focus:outline-none focus:border-teal-500 transition-all"
+                      >
+                        <option value="">Select Employee</option>
+                        {users
+                          .filter((user) => {
+                            const myRole = localStorage.getItem("role");
+                            const myName = localStorage.getItem("username");
 
-                          if (user.username === myName) return false;
+                            if (user.username === myName) return false;
 
-                          // TL can assign to any employee (since employees no longer have teams assigned)
-                          if (myRole === "tl") {
-                            return user.role === "employee";
-                          }
+                            // Filter by search text
+                            const matchesSearch = 
+                              user.username.toLowerCase().includes(assigneeSearch.toLowerCase()) ||
+                              user.role.toLowerCase().includes(assigneeSearch.toLowerCase()) ||
+                              (user.team && user.team.toLowerCase().includes(assigneeSearch.toLowerCase()));
+                            
+                            if (!matchesSearch) return false;
 
-                          // Managers/Admins can assign to employees and TLs
-                          if (myRole === "manager" || myRole === "admin") {
-                            return user.role === "employee" || user.role === "tl";
-                          }
-                          return false;
-                        })
-                        .map((user) => (
-                          <option key={user._id} value={user._id}>
-                            {user.username} {role === "manager" || role === "admin" ? `- ${user.team || "No Team"} ` : ""}({user.role})
-                          </option>
-                        ))}
-                    </select>
+                            // Role based logic
+                            if (myRole === "tl") {
+                              return user.role === "employee";
+                            }
+
+                            if (myRole === "manager" || myRole === "admin") {
+                              return user.role === "employee" || user.role === "tl";
+                            }
+                            return false;
+                          })
+                          .map((user) => (
+                            <option key={user._id} value={user._id}>
+                              {user.username} {role === "manager" || role === "admin" ? `- ${user.team || "No Team"} ` : ""}({user.role})
+                            </option>
+                          ))}
+                      </select>
+                    </div>
 
                     <button
                       onClick={addTask}

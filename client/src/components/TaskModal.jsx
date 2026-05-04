@@ -140,10 +140,12 @@ export default function TaskModal({ task, onClose, role }) {
 
             <div>
               <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
-                Last Updated
+                Last Activity
               </span>
               <p className="text-zinc-400 text-sm mt-1">
-                {task.updatedAt
+                {task.statusUpdatedAt
+                  ? new Date(task.statusUpdatedAt).toLocaleString()
+                  : task.updatedAt
                   ? new Date(task.updatedAt).toLocaleString()
                   : "—"}
               </p>

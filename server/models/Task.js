@@ -28,6 +28,10 @@ const taskSchema = new mongoose.Schema({
         type: String,
         enum: ["pending", "ongoing", "completed"],
         default: "pending"
+    },
+    statusUpdatedAt: {
+        type: Date,
+        default: Date.now
     }
 }, { timestamps: true })
 

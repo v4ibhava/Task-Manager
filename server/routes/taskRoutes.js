@@ -3,6 +3,7 @@ const router = express.Router();
 const jwt = require("jsonwebtoken");
 const Task = require("../models/Task");
 const User = require("../models/User");
+const { sendTaskAssignmentEmail } = require("../utils/emailService");
 
 // Verify Token
 const verifyToken = (req, res, next) => {
@@ -90,6 +91,15 @@ router.post(
         .populate("assignedTo", "username role team")
         .populate("assignedBy", "username role team");
 
+      // Send Email Notification (Async/Non-blocking)
+      sendTaskAssignmentEmail(
+        assignee.email,
+        assignee.username,
+        task.title,
+        task.description,
+        assigner.username
+      );
+
       res.json(populated);
     } catch (error) {
       res.status(500).json({
@@ -114,33 +124,65 @@ router.get(
         return res.status(404).json({ message: "User not found" });
       }
 
-      let tasks = [];
+      const { page = 1, limit = 10, search, status, sortBy = "createdAt", order = "desc" } = req.query;
+
+      const query = {};
 
       if (user.role === "employee") {
-        // Employees see only tasks assigned to them
-        tasks = await Task.find({
-          assignedTo: req.userId
-        })
-          .populate("assignedTo", "username role team")
-          .populate("assignedBy", "username role team")
-          .sort({ createdAt: -1 });
+        query.assignedTo = req.userId;
       } else if (user.role === "tl") {
-        // TLs see tasks within their team
-        tasks = await Task.find({
-          team: user.team
-        })
-          .populate("assignedTo", "username role team")
-          .populate("assignedBy", "username role team")
-          .sort({ createdAt: -1 });
-      } else {
-        // Admins and Managers see all tasks
-        tasks = await Task.find()
-          .populate("assignedTo", "username role team")
-          .populate("assignedBy", "username role team")
-          .sort({ createdAt: -1 });
+        query.team = user.team;
       }
 
-      res.json(tasks);
+      if (search) {
+        query.title = { $regex: search, $options: "i" };
+      }
+
+      if (status && status !== "all") {
+        query.status = status;
+      }
+
+      const sortObject = {};
+      sortObject[sortBy] = order === "asc" ? 1 : -1;
+
+      const pageNumber = parseInt(page);
+      const limitNumber = parseInt(limit);
+      const skip = (pageNumber - 1) * limitNumber;
+
+      const totalTasks = await Task.countDocuments(query);
+      const totalPages = Math.ceil(totalTasks / limitNumber);
+
+      const tasks = await Task.find(query)
+        .populate("assignedTo", "username role team")
+        .populate("assignedBy", "username role team")
+        .sort(sortObject)
+        .skip(skip)
+        .limit(limitNumber);
+
+      // Calculate stats
+      const statsQuery = { ...query };
+      delete statsQuery.status; // Remove status filter for overall stats
+      const allMatchingTasks = await Task.find(statsQuery).select("status");
+
+      const stats = {
+        pending: 0,
+        ongoing: 0,
+        completed: 0
+      };
+
+      allMatchingTasks.forEach(t => {
+        if (stats[t.status] !== undefined) {
+          stats[t.status]++;
+        }
+      });
+
+      res.json({
+        tasks,
+        totalPages,
+        currentPage: pageNumber,
+        totalTasks,
+        stats
+      });
     } catch (error) {
       res.status(500).json({
         message: "Failed to fetch tasks",
@@ -188,7 +230,7 @@ router.put(
 
       const updated = await Task.findByIdAndUpdate(
         req.params.id,
-        { status },
+        { status, statusUpdatedAt: Date.now() },
         { returnDocument: "after" }
       )
         .populate("assignedTo", "username role team")
